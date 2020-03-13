@@ -188,12 +188,8 @@ namespace {
 	bool upload_rate_compare(peer_connection const* lhs
 		, peer_connection const* rhs)
 	{
-		// take torrent priority into account
-		std::int64_t const c1 = lhs->uploaded_in_last_round()
-			* lhs->get_priority(peer_connection::upload_channel);
-		std::int64_t const c2 = rhs->uploaded_in_last_round()
-			* rhs->get_priority(peer_connection::upload_channel);
-
+		std::int64_t const c1 = lhs->uploaded_in_last_round();
+		std::int64_t const c2 = rhs->uploaded_in_last_round();
 		return c1 > c2;
 	}
 
@@ -307,8 +303,8 @@ namespace {
 		// intention is to not spread upload bandwidth too thin, but also to not
 		// unchoke few enough peers to not be able to saturate the up-link.
 		// this is done by traversing the peers sorted by our upload rate to
-		// them in decreasing rates. For each peer we increase our threshold
-		// by 1 kB/s. The first peer we get to whom we upload slower than
+		// them in decreasing rates. For each peer we double the threshold
+		// The first peer we get to whom we upload slower than
 		// the threshold, we stop and that's the number of unchoke slots we have.
 		if (sett.get_int(settings_pack::choking_algorithm)
 			== settings_pack::rate_based_choker)
@@ -317,28 +313,27 @@ namespace {
 			// it purely based on the current state of our peers.
 			upload_slots = 0;
 
-			// TODO: use an incremental partial_sort() here. We don't need
-			// to sort the entire list
+			int rate_threshold = sett.get_int(settings_pack::rate_choker_initial_threshold);
 
-			// TODO: make the comparison function a free function and move it
-			// into this cpp file
-			std::sort(peers.begin(), peers.end()
-				, std::bind(&upload_rate_compare, _1, _2));
+			auto begin = peers.begin();
 
-			// TODO: make configurable
-			int rate_threshold = 1024;
-
-			for (auto const p : peers)
+			for (int i = 0; i < int(peers.size()); ++i, ++begin)
 			{
+				// just make sure the next element is sorted
+				std::nth_element(begin, begin, peers.end()
+					, std::bind(&upload_rate_compare, _1, _2));
+
+				auto const* p = *begin;
+
 				int const rate = int(p->uploaded_in_last_round()
 					* 1000 / total_milliseconds(unchoke_interval));
 
-				if (rate < rate_threshold) break;
+				// always have at least 1 unchoke slot
+				if (rate < rate_threshold && i > 0) break;
 
 				++upload_slots;
 
-				// TODO: make configurable
-				rate_threshold += 1024;
+				rate_threshold += rate_threshold / 2;
 			}
 			++upload_slots;
 		}

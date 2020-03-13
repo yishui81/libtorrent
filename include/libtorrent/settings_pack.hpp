@@ -1049,6 +1049,9 @@ namespace aux {
 			// * ``rate_based_choker`` opens up unchoke slots based on the upload
 			//   rate achieved to peers. The more slots that are opened, the
 			//   marginal upload rate required to open up another slot increases.
+			//   Configure the initial threshold with
+			//   settings_pack::rate_choker_initial_threshold. The
+			//   rate_based_choker will always have at least 1 unchoke slot.
 			//
 			// ``seed_choking_algorithm`` controls the seeding unchoke behavior.
 			// i.e. How we select which peers to unchoke for seeding torrents.
@@ -1766,6 +1769,32 @@ namespace aux {
 			// corresponds to the, Linux-specific, ``TCP_NOTSENT_LOWAT`` TCP socket
 			// option.
 			send_not_sent_low_watermark,
+
+			// the rate based choker compares the upload rate to peers against a
+			// threshold that doubles for every peer it visits, visiting peers in
+			// decreasing upload rate. The number of upload slots is determine by
+			// the number of peers whose upload rate exceeds the threshold. This
+			// option sets the start value for this threshold. A higher value leads
+			// to fewer unchoke slots, a lower value leads to more.
+			//
+			// With a value of 1024, the series of thresholds to compare against
+			// become:
+			// * 1 kiB/s
+			// * 2 kiB/s
+			// * 4 kiB/s
+			// * 8 kiB/s
+			// * 16 kiB/s
+			// * 32 kiB/s
+			// * 64 kiB/s
+			// * 128 kiB/s
+			// * 256 kiB/s
+			// * 512 kiB/s
+			// * 1 MiB/s
+			// * 2 MiB/s
+			// e.g. if the 8th fastest upload rate exceeds 128 kiB/s, but the 9th
+			// fastest upload rate is lower than 256 kiB/s, you will have 8 upload
+			// slots.
+			rate_choker_initial_threshold,
 
 			// The expiration time of UPnP port-mappings, specified in seconds. 0
 			// means permanent lease. Some routers do not support expiration times
