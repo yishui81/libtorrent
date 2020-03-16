@@ -841,6 +841,78 @@ example, if a client has both IPv4 and IPv6 connectivity, but the socks5 proxy
 only resolves to IPv4, only the IPv4 address will have a UDP tunnel. In that case,
 the IPv6 connection will not be used, since it cannot use the proxy.
 
+rate base choking
+=================
+
+libtorrent supports a choking algorithm that automatically determines the number
+of upload slots (unchoke slots) based on the upload rate to peers. It's
+controlled by the settings_pack::choking_algorithm setting.
+
+The algorithm is designed to stay stable, and not oscillate the number of upload
+slots.
+
+The initial rate threshold is set to settings_pack::rate_choker_initial_threshold.
+
+It sorts all peers by on the rate at which we can upload to them.
+
+1. Compare the fastest peer against the initial threshold.
+2. Increment the threshold by 50%.
+3. The next fastest peer is compared against the threshold.
+   If the peer rate is higher than the threshold. goto 2
+4. Terminate. The number of peers visited is the number of unchoke slots, but never less than 1.
+
+In other words, the more upload slots you have, the higher rate does the slowest
+peer upload at in order to open another slot.
+
+With an initial threshold of 1 kiB/s (1024), the thresholds end up being:
+
++--------------+-----------+
+| nth peer     | unchoke   |
+| upload rate  | slots     |
+| threshold    |           |
++==============+===========+
+| 1.0 kiB/s    | 1         |
++--------------+-----------+
+| 1.5 kiB/s    | 2         |
++--------------+-----------+
+| 2.2 kiB/s    | 3         |
++--------------+-----------+
+| 3.4 kiB/s    | 4         |
++--------------+-----------+
+| 5.1 kiB/s    | 5         |
++--------------+-----------+
+| 7.6 kiB/s    | 6         |
++--------------+-----------+
+| 11.4 kiB/s   | 7         |
++--------------+-----------+
+| 17.1 kiB/s   | 8         |
++--------------+-----------+
+| 25.6 kiB/s   | 9         |
++--------------+-----------+
+| 38.4 kiB/s   | 10        |
++--------------+-----------+
+| 57.7 kiB/s   | 11        |
++--------------+-----------+
+| 86.5 kiB/s   | 12        |
++--------------+-----------+
+| 129.7 kiB/s  | 13        |
++--------------+-----------+
+| 194.6 kiB/s  | 14        |
++--------------+-----------+
+| 291.9 kiB/s  | 15        |
++--------------+-----------+
+| 437.9 kiB/s  | 16        |
++--------------+-----------+
+| 656.8 kiB/s  | 17        |
++--------------+-----------+
+| 985.2 kiB/s  | 18        |
++--------------+-----------+
+| 1477.9 kiB/s | 19        |
++--------------+-----------+
+| 2216.8 kiB/s | 20        |
++--------------+-----------+
+
+
 predictive piece announce
 =========================
 

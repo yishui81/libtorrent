@@ -56,9 +56,6 @@ POSSIBILITY OF SUCH DAMAGE.
 //
 // Each configuration option is named with an enum value inside the
 // settings_pack class. These are the available settings:
-//
-// .. include:: settings-ref.rst
-//
 namespace libtorrent {
 
 namespace aux {
@@ -92,6 +89,9 @@ namespace aux {
 	// enum values. These values are passed in to the ``set_str()``,
 	// ``set_int()``, ``set_bool()`` functions, to specify the setting to
 	// change.
+	//
+	// .. include:: settings-ref.rst
+	//
 	struct TORRENT_EXPORT settings_pack
 	{
 		friend TORRENT_EXTRA_EXPORT void apply_pack_impl(settings_pack const*
@@ -1040,39 +1040,14 @@ namespace aux {
 			// downloading torrents is always "tit-for-tat", i.e. the peers we
 			// download the fastest from are unchoked.
 			//
-			// The options for choking algorithms are:
-			//
-			// * ``fixed_slots_choker`` is the traditional choker with a fixed
-			//   number of unchoke slots (as specified by
-			//   ``settings_pack::unchoke_slots_limit``).
-			//
-			// * ``rate_based_choker`` opens up unchoke slots based on the upload
-			//   rate achieved to peers. The more slots that are opened, the
-			//   marginal upload rate required to open up another slot increases.
-			//   Configure the initial threshold with
-			//   settings_pack::rate_choker_initial_threshold. The
-			//   rate_based_choker will always have at least 1 unchoke slot.
+			// The options for choking algorithms are defined in the
+			// choking_algorithm_t enum.
 			//
 			// ``seed_choking_algorithm`` controls the seeding unchoke behavior.
 			// i.e. How we select which peers to unchoke for seeding torrents.
 			// Since a seeding torrent isn't downloading anything, the
-			// tit-for-tat mechanism cannot be used. The available options are:
-			//
-			// * ``round_robin`` which round-robins the peers that are unchoked
-			//   when seeding. This distributes the upload bandwidth uniformly and
-			//   fairly. It minimizes the ability for a peer to download everything
-			//   without redistributing it.
-			//
-			// * ``fastest_upload`` unchokes the peers we can send to the fastest.
-			//   This might be a bit more reliable in utilizing all available
-			//   capacity.
-			//
-			// * ``anti_leech`` prioritizes peers who have just started or are
-			//   just about to finish the download. The intention is to force
-			//   peers in the middle of the download to trade with each other.
-			//   This does not just take into account the pieces a peer is
-			//   reporting having downloaded, but also the pieces we have sent
-			//   to it.
+			// tit-for-tat mechanism cannot be used. The available options are
+			// defined in the seed_choking_algorithm_t enum.
 			choking_algorithm,
 			seed_choking_algorithm,
 
@@ -1771,29 +1746,12 @@ namespace aux {
 			send_not_sent_low_watermark,
 
 			// the rate based choker compares the upload rate to peers against a
-			// threshold that doubles for every peer it visits, visiting peers in
-			// decreasing upload rate. The number of upload slots is determine by
-			// the number of peers whose upload rate exceeds the threshold. This
-			// option sets the start value for this threshold. A higher value leads
-			// to fewer unchoke slots, a lower value leads to more.
-			//
-			// With a value of 1024, the series of thresholds to compare against
-			// become:
-			// * 1 kiB/s
-			// * 2 kiB/s
-			// * 4 kiB/s
-			// * 8 kiB/s
-			// * 16 kiB/s
-			// * 32 kiB/s
-			// * 64 kiB/s
-			// * 128 kiB/s
-			// * 256 kiB/s
-			// * 512 kiB/s
-			// * 1 MiB/s
-			// * 2 MiB/s
-			// e.g. if the 8th fastest upload rate exceeds 128 kiB/s, but the 9th
-			// fastest upload rate is lower than 256 kiB/s, you will have 8 upload
-			// slots.
+			// threshold that increases proportionally by its size for every
+			// peer it visits, visiting peers in decreasing upload rate. The
+			// number of upload slots is determine by the number of peers whose
+			// upload rate exceeds the threshold. This option sets the start
+			// value for this threshold. A higher value leads to fewer unchoke
+			// slots, a lower value leads to more.
 			rate_choker_initial_threshold,
 
 			// The expiration time of UPnP port-mappings, specified in seconds. 0
@@ -1818,7 +1776,18 @@ namespace aux {
 
 		enum choking_algorithm_t : std::uint8_t
 		{
+			// This is the traditional choker with a fixed
+			// number of unchoke slots (as specified by
+			// settings_pack::unchoke_slots_limit).
 			fixed_slots_choker = 0,
+
+			// This opens up unchoke slots based on the upload rate achieved to
+			// peers. The more slots that are opened, the marginal upload rate
+			// required to open up another slot increases. Configure the initial
+			// threshold with settings_pack::rate_choker_initial_threshold. The
+			// rate_based_choker will always have at least 1 unchoke slot.
+			//
+			// For more information, see `rate based choking`_.
 			rate_based_choker = 2,
 #if TORRENT_ABI_VERSION == 1
 			bittyrant_choker TORRENT_DEPRECATED_ENUM = 3
@@ -1829,8 +1798,22 @@ namespace aux {
 
 		enum seed_choking_algorithm_t : std::uint8_t
 		{
+			// which round-robins the peers that are unchoked
+			// when seeding. This distributes the upload bandwidth uniformly and
+			// fairly. It minimizes the ability for a peer to download everything
+			// without redistributing it.
 			round_robin,
+
+			// unchokes the peers we can send to the fastest. This might be a
+			// bit more reliable in utilizing all available capacity.
 			fastest_upload,
+
+			// prioritizes peers who have just started or are
+			// just about to finish the download. The intention is to force
+			// peers in the middle of the download to trade with each other.
+			// This does not just take into account the pieces a peer is
+			// reporting having downloaded, but also the pieces we have sent
+			// to it.
 			anti_leech
 		};
 
