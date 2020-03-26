@@ -2923,6 +2923,8 @@ namespace {
 				, m_undead_peers.capacity());
 			if (sp.use_count() > 2)
 				m_undead_peers.push_back(sp);
+#error if peer is unchoked re-trigger unchoke calculation
+#error if peer is optimistically unchoked, retrigger optimistic unchoke
 		}
 	}
 
@@ -4205,11 +4207,9 @@ namespace {
 		{
 			session_log("RECALCULATE UNCHOKE SLOTS: [ peers: %d "
 				"eligible-peers: %d"
-				" max_upload_rate: %d"
 				" allowed-slots: %d ]"
 				, int(m_connections.size())
 				, int(peers.size())
-				, max_upload_rate
 				, allowed_upload_slots);
 		}
 #endif

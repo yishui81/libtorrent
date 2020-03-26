@@ -315,21 +315,19 @@ namespace {
 
 			int rate_threshold = sett.get_int(settings_pack::rate_choker_initial_threshold);
 
-			auto begin = peers.begin();
+			std::sort(peers.begin(), peers.end()
+				, std::bind(&upload_rate_compare, _1, _2));
 
-			for (int i = 0; i < int(peers.size()); ++i, ++begin)
+			for (auto const* p : peers)
 			{
-				// just make sure the next element is sorted
-				std::nth_element(begin, begin, peers.end()
-					, std::bind(&upload_rate_compare, _1, _2));
-
-				auto const* p = *begin;
-
 				int const rate = int(p->uploaded_in_last_round()
 					* 1000 / total_milliseconds(unchoke_interval));
 
+				printf("%d threshold: %-7d rate: %-7d\n"
+					, upload_slots + 1, rate_threshold, rate);
+
 				// always have at least 1 unchoke slot
-				if (rate < rate_threshold && i > 0) break;
+				if (rate < rate_threshold) break;
 
 				++upload_slots;
 
