@@ -152,7 +152,7 @@ void test_interval(int interval)
 }
 
 template <typename AddTorrent, typename OnAlert>
-std::vector<std::string> test_event(swarm_test const type
+std::vector<std::string> test_event(swarm_test_t const type
 	, AddTorrent add_torrent
 	, OnAlert on_alert)
 {
