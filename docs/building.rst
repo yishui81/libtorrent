@@ -548,7 +548,10 @@ defines you can use to control the build.
 | ``TORRENT_DISABLE_LOGGING``            | This macro will disable support for logging     |
 |                                        | alerts, like log_alert, torrent_log_alert and   |
 |                                        | peer_log_alert. With this build flag, you       |
-|                                        | cannot enable those alerts.                     |
+|                                        | cannot enable those alerts. Furthermore, human  |
+|                                        | readable messages returned from the alert       |
+|                                        | ``message()`` member functions will return      |
+|                                        | empty strings.                                  |
 +----------------------------------------+-------------------------------------------------+
 | ``TORRENT_DISABLE_SUPERSEEDING``       | This macro will disable support for super       |
 |                                        | seeding. The settings will exist, but will not  |
